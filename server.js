@@ -1,0 +1,10 @@
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+dotenv.config()
+const app=express(); app.use(cors()); app.use(express.json())
+const catalogue=[['Pixel 9a','Smartphones',42999],['Galaxy S24 FE','Smartphones',34999],['Nord CE4','Smartphones',24999],['Everyday Sneakers','Fashion',2299],['Linen Overshirt','Fashion',1299]]
+function fallback(message,section){const scope=section==='Smartphones'?'smartphones':section==='Fashion'?'fashion products':'products';const hits=catalogue.filter(p=>section==='Smartphones'?p[1]==='Smartphones':section==='Fashion'?p[1]==='Fashion':true).slice(0,3);return `Fallback mode: I can help with ${scope} using our demonstration catalogue. ${hits.map(p=>`${p[0]} at ₹${p[2].toLocaleString('en-IN')}`).join(', ')}. Ask for a budget, camera, battery, size, or comparison.`}
+app.get('/api/health',(req,res)=>res.json({ok:true,geminiConfigured:Boolean(process.env.GEMINI_API_KEY)}))
+app.post('/api/assistant',async(req,res)=>{const {message,section='home'}=req.body||{};if(!message?.trim())return res.status(400).json({error:'Message is required'});if(!process.env.GEMINI_API_KEY)return res.json({reply:fallback(message,section),fallback:true});try{const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:`You are SathishAI, a concise shopping assistant. Active section: ${section}. Only recommend from this demo catalogue: ${JSON.stringify(catalogue)}. Mention demo data. User: ${message}`}]}]})});if(!response.ok)throw new Error('Gemini unavailable');const data=await response.json();return res.json({reply:data.candidates?.[0]?.content?.parts?.[0]?.text||fallback(message,section),fallback:false})}catch{return res.json({reply:fallback(message,section),fallback:true})}})
+app.listen(process.env.PORT||5050,()=>console.log(`SathishAI API listening on ${process.env.PORT||5050}`))
