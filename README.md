@@ -1,38 +1,42 @@
-# SathishAI
+﻿# Buyora - AI Shopping Assistant
 
-SathishAI is a responsive React + Vite shopping comparison workspace with 24 local demonstration products, saved products, comparisons, price alerts, order tracking, theme preferences, and an Express Gemini proxy with a clearly labeled fallback mode.
+Buyora is a responsive React + Vite shopping comparison platform with 24 curated products across Smartphones and Fashion, saved items, price alerts, order tracking, settings, multi-store price comparisons, and automated Amazon India affiliate link generation.
 
-## Requirements
+## Amazon Affiliate Automation
 
-Node.js 18+ and npm. The project lives at `D:\sathishai`.
+- **Store / Tracking ID**: `buyora210b-21` (configurable via `AMAZON_ASSOCIATE_TAG`).
+- **Exact ASIN Mapping**: Map product IDs (e.g., `phone-1`) in `backend/amazon_products.json` to verified 10-character ASINs or standard HTTPS `amazon.in` product URLs.
+- **Search Amazon Fallback**: When an exact ASIN mapping is absent, store comparisons automatically generate a compliant search query link tagged with `tag=buyora210b-21` and clearly labeled **"Search Amazon"**.
+- **Transparency & Honesty**: Real Amazon prices and inventory require official Product Advertising API access; prices and delivery are accurately displayed as *"Check on Amazon"*. Other store offers remain simulation comparisons.
+- **Associate Disclosure**: Includes the required Amazon Associate disclosure.
 
-## Run locally
+## Backend & API
 
+The project supports both a standalone Python FastAPI backend and Netlify serverless functions:
+- **FastAPI Backend**: Located in `backend/main.py` with SQLite database, duplicate cleanup, and CORS support.
+- **Netlify Functions**: Located in `netlify/functions/api.js` for zero-configuration serverless API execution on Netlify.
+
+### Run Locally
+
+#### Frontend:
 ```powershell
 cd D:\sathishai
 npm install
-Copy-Item .env.example .env
-npm run start
+npm run dev
 ```
 
-Open `http://localhost:5173`. The API health endpoint is `http://localhost:5050/api/health`.
+#### FastAPI Backend:
+```powershell
+cd D:\sathishai\backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
 
-Add your own Gemini key to `D:\sathishai\.env` as `GEMINI_API_KEY=...`. It is read only by the backend and excluded from Git. Without it, the useful catalogue assistant runs in fallback mode.
+### Run Tests
 
-## Commands
-
-`npm run dev` starts Vite, `npm run server` starts Express, `npm run start` starts both, `npm run lint` checks source, and `npm run build` creates the production frontend build.
-
-## Structure and data
-
-`src/App.jsx` contains reusable workspace views and the local product catalogue. `src/App.css` contains the responsive design. `server.js` owns the API and Gemini proxy. Affiliate links currently point to `example.com/affiliate`; replace them in `src/App.jsx` or move them into an API feed adapter when approved retailer feeds are available.
-
-Amazon, Flipkart, and Meesho content is explicitly demonstration data and is not scraped or live. Orders and price alerts are also demonstration features.
-
-## Connecting retailers
-
-Replace the local catalogue with licensed retailer or affiliate feed adapters in Express. Keep retailer credentials in `.env`, normalize offers into the existing product shape, and add retailer-specific order and price-alert integrations. No retailer account or payment flow is implemented.
-
-## Privacy
-
-Saved products, alerts, theme, and chat history are local browser demonstration state. Affiliate URLs are placeholders. Never commit `.env` or API keys.
+```powershell
+$env:PYTHONPATH="D:\sathishai\backend"; python -m unittest discover -s D:\sathishai\backend -p "test_*.py"
+npm --prefix D:\sathishai run build
+```
